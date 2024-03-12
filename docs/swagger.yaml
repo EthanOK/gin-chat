@@ -44,6 +44,26 @@ paths:
       summary: 新增用户
       tags:
       - 用户模块
+  /user/deleteUser:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: id
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code","message"}
+          schema:
+            type: string
+      summary: 删除用户
+      tags:
+      - 用户模块
   /user/getUserList:
     get:
       consumes:

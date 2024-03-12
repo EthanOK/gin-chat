@@ -36,7 +36,12 @@ func GetUserList() (userList []*UserBasic, err error) {
 	return
 }
 
-func CreateUser(user *UserBasic) (err error) {
-	err = utils.DB.Create(&user).Error
-	return
+func CreateUser(user *UserBasic) *gorm.DB {
+
+	return utils.DB.Create(&user)
+}
+
+func DeleteUser(user *UserBasic) *gorm.DB {
+
+	return utils.DB.Delete(&user)
 }
