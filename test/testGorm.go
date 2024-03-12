@@ -13,7 +13,8 @@ func main() {
 		panic("failed to connect database")
 	}
 
-	// 迁移 schema
+	// 通过AutoMigrate函数可以快速建表，如果表已经存在不会重复创建。
+	// 不支持修改字段和删除字段，可以增加字段。
 	db.AutoMigrate(&models.UserBasic{})
 
 	user := models.UserBasic{}

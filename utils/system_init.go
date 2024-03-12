@@ -10,6 +10,7 @@ var DB *gorm.DB
 
 func InitConfig() {
 	viper.SetConfigName("app")
+	viper.SetConfigType("yaml")
 	viper.AddConfigPath("config")
 	if err := viper.ReadInConfig(); err != nil {
 		panic(err)
