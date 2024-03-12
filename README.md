@@ -36,6 +36,81 @@ go get -u github.com/spf13/viper
 	if err != nil {
 		panic("failed to connect database")
 	}
+
+	// 通过 UserBasic 自动创建 表
+	db_.AutoMigrate(&model.UserBasic{})
 ```
 
-二、引入 Gin 框架
+## 二、引入 Gin 框架
+
+- 安装 Gin
+
+```
+go get -u github.com/gin-gonic/gin
+```
+
+- 配置 Gin
+
+```go
+	// package service
+	func GetIndex(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Welcome Gin Chat!!!",
+	})
+}
+```
+
+```go
+	r := gin.Default()
+
+	r.GET("/index", service.GetIndex)
+
+```
+
+- 启动 Gin
+
+```go
+	r.Run(":8080")
+```
+
+## 三、引入 gin-swagger
+
+- 安装 gin-swagger
+
+```
+go get -u github.com/swaggo/swag/cmd/swag
+
+go get -u github.com/swaggo/gin-swagger
+go get -u github.com/swaggo/files
+```
+
+- 配置 gin-swagger
+
+`service/index.go`
+
+```go
+	// GetIndex
+	// @Tags 首页
+	// @Accept json
+	// @Produce json
+	// @Success 200 {string} Welcome!!!
+	// @Router /index [get]
+	func GetIndex(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Welcome Gin Chat!!!",
+		})
+	}
+```
+
+`router/app.go`
+
+```go
+	docs.SwaggerInfo.BasePath = ""
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+```
+
+- 生成 dosc files
+
+```
+swag init
+```

@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"fmt"
 	"gin-chat/utils"
 
 	"gorm.io/gorm"
@@ -31,8 +30,13 @@ func (user *UserBasic) TableName() string {
 func GetUserList() (userList []*UserBasic, err error) {
 	err = utils.DB.Find(&userList).Error
 
-	for _, v := range userList {
-		fmt.Println(v)
-	}
+	// for _, v := range userList {
+	// 	fmt.Println(v)
+	// }
+	return
+}
+
+func CreateUser(user *UserBasic) (err error) {
+	err = utils.DB.Create(&user).Error
 	return
 }
