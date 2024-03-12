@@ -67,3 +67,25 @@ func DeleteUser(c *gin.Context) {
 		"message": "删除用户成功",
 	})
 }
+
+// UpdateUser
+// @Summary 修改用户
+// @Tags 用户模块
+// @param id formData string true "id"
+// @param name formData string true "name"
+// @param password formData string true "password"
+// @Success 200 {string} json{"code","message"}
+// @Router /user/updateUser [post]
+func UpdateUser(c *gin.Context) {
+	user := models.UserBasic{}
+	id, _ := strconv.Atoi(c.PostForm("id"))
+	user.ID = uint(id)
+	user.Name = c.PostForm("name")
+	user.PassWord = c.PostForm("password")
+
+	models.UpdateUser(&user)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "更新用户成功",
+	})
+}
