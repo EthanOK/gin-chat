@@ -89,12 +89,18 @@ paths:
       - description: name
         in: formData
         name: name
-        required: true
         type: string
       - description: password
         in: formData
         name: password
-        required: true
+        type: string
+      - description: phone
+        in: formData
+        name: phone
+        type: string
+      - description: email
+        in: formData
+        name: email
         type: string
       responses:
         "200":
