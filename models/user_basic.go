@@ -16,6 +16,7 @@ type UserBasic struct {
 	Identity      string
 	ClientIp      string
 	ClientPort    string
+	Salt          string
 	LoginTime     sql.NullTime
 	HeartbeatTime sql.NullTime
 	LoginOutTime  sql.NullTime
@@ -36,7 +37,30 @@ func GetUserList() (userList []*UserBasic, err error) {
 	return
 }
 
+func FindUserByNameAndPwd(name string, password string) (user UserBasic) {
+	utils.DB.Where("name = ? and password = ?", name, password).First(&user)
+	return
+}
+
+func FindUserByName(name string) (user UserBasic) {
+
+	utils.DB.Where("name = ?", name).First(&user)
+	return
+}
+
+func FindUserByPhone(phone string) (user UserBasic) {
+
+	utils.DB.Where("phone = ?", phone).First(&user)
+	return
+}
+func FindUserByEmail(email string) (user UserBasic) {
+	utils.DB.Where("email = ?", email).First(&user)
+	return
+}
+
 func CreateUser(user *UserBasic) *gorm.DB {
+
+	utils.DB.AutoMigrate(&UserBasic{})
 
 	return utils.DB.Create(&user)
 }

@@ -37,13 +37,7 @@ const docTemplate = `{
             }
         },
         "/user/createUser": {
-            "get": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+            "post": {
                 "tags": [
                     "用户模块"
                 ],
@@ -53,21 +47,21 @@ const docTemplate = `{
                         "type": "string",
                         "description": "name",
                         "name": "name",
-                        "in": "query",
+                        "in": "formData",
                         "required": true
                     },
                     {
                         "type": "string",
                         "description": "password",
                         "name": "password",
-                        "in": "query",
+                        "in": "formData",
                         "required": true
                     },
                     {
                         "type": "string",
                         "description": "repassword",
                         "name": "repassword",
-                        "in": "query",
+                        "in": "formData",
                         "required": true
                     }
                 ],
@@ -82,13 +76,7 @@ const docTemplate = `{
             }
         },
         "/user/deleteUser": {
-            "get": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+            "post": {
                 "tags": [
                     "用户模块"
                 ],
@@ -98,7 +86,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "id",
                         "name": "id",
-                        "in": "query",
+                        "in": "formData",
                         "required": true
                     }
                 ],
@@ -124,6 +112,38 @@ const docTemplate = `{
                     "用户模块"
                 ],
                 "summary": "获取用户列表",
+                "responses": {
+                    "200": {
+                        "description": "code\",\"message\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/loginUser": {
+            "post": {
+                "tags": [
+                    "用户模块"
+                ],
+                "summary": "用户登陆",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "name",
+                        "name": "name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "password",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "code\",\"message\"}",

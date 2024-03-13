@@ -1,7 +1,10 @@
 package service
 
 import (
+	"fmt"
 	"gin-chat/models"
+	"gin-chat/utils"
+	"math/rand"
 	"net/http"
 	"strconv"
 
@@ -26,25 +29,35 @@ func GetUserList(c *gin.Context) {
 // CreateUser
 // @Summary 新增用户
 // @Tags 用户模块
-// @param name query string true "name"
-// @param password query string true "password"
-// @param repassword query string true "repassword"
-// @Accept json
-// @Produce json
+// @param name formData string true "name"
+// @param password formData string true "password"
+// @param repassword formData string true "repassword"
 // @Success 200 {string} json{"code","message"}
-// @Router /user/createUser [get]
+// @Router /user/createUser [post]
 func CreateUser(c *gin.Context) {
 	user := models.UserBasic{}
-	user.Name = c.Query("name")
-	password := c.Query("password")
-	repassword := c.Query("repassword")
+	user.Name = c.PostForm("name")
+	password := c.PostForm("password")
+	repassword := c.PostForm("repassword")
+	salt := fmt.Sprintf("%06d", rand.Int31())
+
+	data := models.FindUserByName(user.Name)
+	if data.Name != "" {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "用户名已存在",
+		})
+		return
+	}
+
 	if password != repassword {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "密码不一致",
 		})
 		return
 	}
-	user.PassWord = password
+
+	user.PassWord = utils.MakePassword(password, salt)
+	user.Salt = salt
 	models.CreateUser(&user)
 	c.JSON(http.StatusOK, gin.H{
 		"message": "新增用户成功",
@@ -54,14 +67,12 @@ func CreateUser(c *gin.Context) {
 // DeleteUser
 // @Summary 删除用户
 // @Tags 用户模块
-// @param id query string true "id"
-// @Accept json
-// @Produce json
+// @param id formData string true "id"
 // @Success 200 {string} json{"code","message"}
-// @Router /user/deleteUser [get]
+// @Router /user/deleteUser [post]
 func DeleteUser(c *gin.Context) {
 	user := models.UserBasic{}
-	id, _ := strconv.Atoi(c.Query("id"))
+	id, _ := strconv.Atoi(c.PostForm("id"))
 	user.ID = uint(id)
 	models.DeleteUser(&user)
 	c.JSON(http.StatusOK, gin.H{
@@ -100,5 +111,39 @@ func UpdateUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "更新用户成功",
+	})
+}
+
+// LoginUser
+// @Summary 用户登陆
+// @Tags 用户模块
+// @param name formData string true "name"
+// @param password formData string true "password"
+// @Success 200 {string} json{"code","message"}
+// @Router /user/loginUser [post]
+func LoginUser(c *gin.Context) {
+
+	name := c.PostForm("name")
+	plainpwd := c.PostForm("password")
+
+	user := models.FindUserByName(name)
+	if user.Name == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "用户名不存在",
+		})
+		return
+	}
+	valid := utils.ValidPassword(plainpwd, user.Salt, user.PassWord)
+
+	if !valid {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "密码错误",
+		})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "登陆成功",
 	})
 }

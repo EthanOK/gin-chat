@@ -136,3 +136,146 @@ func InitMysql() {
 ```
 
 ## 五、用户模块基本功能
+
+- 创建用户
+
+```go
+// CreateUser
+// @Summary 新增用户
+// @Tags 用户模块
+// @param name formData string true "name"
+// @param password formData string true "password"
+// @param repassword formData string true "repassword"
+// @Success 200 {string} json{"code","message"}
+// @Router /user/createUser [post]
+func CreateUser(c *gin.Context) {
+	user := models.UserBasic{}
+	user.Name = c.PostForm("name")
+	password := c.PostForm("password")
+	repassword := c.PostForm("repassword")
+	if password != repassword {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "密码不一致",
+		})
+		return
+	}
+	user.PassWord = password
+	models.CreateUser(&user)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "新增用户成功",
+	})
+}
+```
+
+- 获取用户列表
+
+```go
+// GetUserList
+// @Summary 获取用户列表
+// @Tags 用户模块
+// @Accept json
+// @Produce json
+// @Success 200 {string} json{"code","message"}
+// @Router /user/getUserList [get]
+func GetUserList(c *gin.Context) {
+	data, _ := models.GetUserList()
+	c.JSON(http.StatusOK, gin.H{
+		"message": data,
+	})
+}
+```
+
+- 删除用户
+
+```go
+// DeleteUser
+// @Summary 删除用户
+// @Tags 用户模块
+// @param id formData string true "id"
+// @Success 200 {string} json{"code","message"}
+// @Router /user/deleteUser [post]
+func DeleteUser(c *gin.Context) {
+	user := models.UserBasic{}
+	id, _ := strconv.Atoi(c.PostForm("id"))
+	user.ID = uint(id)
+	models.DeleteUser(&user)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "删除用户成功",
+	})
+}
+```
+
+- 更新用户
+
+```go
+// UpdateUser
+// @Summary 修改用户
+// @Tags 用户模块
+// @param id formData string true "id"
+// @param name formData string false "name"
+// @param password formData string fase "password"
+// @param phone formData string false "phone"
+// @param email formData string false "email"
+// @Success 200 {string} json{"code","message"}
+// @Router /user/updateUser [post]
+func UpdateUser(c *gin.Context) {
+	user := models.UserBasic{}
+	id, _ := strconv.Atoi(c.PostForm("id"))
+	user.ID = uint(id)
+	user.Name = c.PostForm("name")
+	user.PassWord = c.PostForm("password")
+	user.Phone = c.PostForm("phone")
+	user.Email = c.PostForm("email")
+
+	_, err := govalidator.ValidateStruct(user)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	models.UpdateUser(&user)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "更新用户成功",
+	})
+}
+```
+
+- 校验电话与邮箱
+
+```go
+type UserBasic struct {
+	gorm.Model
+	Name          string
+	PassWord      string
+	Phone         string `valid:"matches(^1[3-9]{1}\\d{9}$)"` //正则表达式验证手机号码格式是否正确，如果不正确
+	Email         string `valid:"email"`
+	Identity      string
+	ClientIp      string
+	ClientPort    string
+	LoginTime     sql.NullTime
+	HeartbeatTime sql.NullTime
+	LoginOutTime  sql.NullTime
+	IsLogout      bool
+	DeviceInfo    string
+}
+```
+
+```go
+func UpdateUser(c *gin.Context) {
+	user := models.UserBasic{}
+	// ......
+	user.Email = c.PostForm("email")
+	// 校验数据
+	_, err := govalidator.ValidateStruct(user)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	// ......
+}
+```
