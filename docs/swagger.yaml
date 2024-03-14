@@ -1,6 +1,22 @@
 info:
   contact: {}
 paths:
+  /getUserByToken:
+    get:
+      parameters:
+      - description: token
+        in: query
+        name: token
+        required: true
+        type: string
+      responses:
+        "200":
+          description: code","message","data"}
+          schema:
+            type: string
+      summary: 解析Token
+      tags:
+      - 测试解析Token
   /index:
     get:
       consumes:

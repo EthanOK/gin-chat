@@ -171,3 +171,30 @@ func LoginUser(c *gin.Context) {
 		"data":    user,
 	})
 }
+
+// GetUserByToken
+// @Summary 解析Token
+// @Tags 测试解析Token
+// @param token query string true "token"
+// @Success 200 {string} json{"code","message","data"}
+// @Router /getUserByToken [get]
+func GetUserByToken(c *gin.Context) {
+	token := c.Query("token")
+	claims, err := models.ParseToken(token)
+
+	if err != nil {
+
+		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
+			"message": "token 不正确",
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "解析成功",
+		"data":    claims,
+	})
+}

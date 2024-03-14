@@ -19,6 +19,8 @@ func Router() *gin.Engine {
 
 	r.GET("/user/getUserList", service.GetUserList)
 
+	r.GET("/getUserByToken", service.GetUserByToken)
+
 	r.POST("/user/createUser", service.CreateUser)
 
 	r.POST("/user/loginUser", service.LoginUser)
