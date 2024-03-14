@@ -153,13 +153,28 @@ func CreateUser(c *gin.Context) {
 	user.Name = c.PostForm("name")
 	password := c.PostForm("password")
 	repassword := c.PostForm("repassword")
+	salt := fmt.Sprintf("%06d", rand.Int31())
+
+	// 通过用户名查用户信息
+	data := models.FindUserByName(user.Name)
+	if data.Name != "" {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "用户名已存在",
+		})
+		return
+	}
+
 	if password != repassword {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "密码不一致",
 		})
 		return
 	}
-	user.PassWord = password
+
+	// 生成 md5 密码
+	user.PassWord = utils.MakePassword(password, salt)
+	// UserBasic 表 添加 Salt 字段
+	user.Salt = salt
 	models.CreateUser(&user)
 	c.JSON(http.StatusOK, gin.H{
 		"message": "新增用户成功",
@@ -277,5 +292,46 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 	// ......
+}
+```
+
+- 用户登陆
+
+```go
+// LoginUser
+// @Summary 用户登陆
+// @Tags 用户模块
+// @param name formData string true "name"
+// @param password formData string true "password"
+// @Success 200 {string} json{"code","message"}
+// @Router /user/loginUser [post]
+func LoginUser(c *gin.Context) {
+
+	name := c.PostForm("name")
+	plainpwd := c.PostForm("password")
+
+	// 通过用户名查用户信息
+	user := models.FindUserByName(name)
+	if user.Name == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "用户名不存在",
+		})
+		return
+	}
+
+	// 验证密码是否正确
+	valid := utils.ValidPassword(plainpwd, user.Salt, user.PassWord)
+
+	if !valid {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "密码错误",
+		})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "登陆成功",
+	})
 }
 ```

@@ -22,7 +22,9 @@ import (
 func GetUserList(c *gin.Context) {
 	data, _ := models.GetUserList()
 	c.JSON(http.StatusOK, gin.H{
-		"message": data,
+		"code":    0,
+		"message": "获取成功",
+		"data":    data,
 	})
 }
 
@@ -41,9 +43,11 @@ func CreateUser(c *gin.Context) {
 	repassword := c.PostForm("repassword")
 	salt := fmt.Sprintf("%06d", rand.Int31())
 
+	// 通过用户名查用户信息
 	data := models.FindUserByName(user.Name)
 	if data.Name != "" {
 		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
 			"message": "用户名已存在",
 		})
 		return
@@ -51,16 +55,20 @@ func CreateUser(c *gin.Context) {
 
 	if password != repassword {
 		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
 			"message": "密码不一致",
 		})
 		return
 	}
 
+	// 生成 md5 密码
 	user.PassWord = utils.MakePassword(password, salt)
 	user.Salt = salt
 	models.CreateUser(&user)
 	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
 		"message": "新增用户成功",
+		"data":    user,
 	})
 }
 
@@ -76,7 +84,9 @@ func DeleteUser(c *gin.Context) {
 	user.ID = uint(id)
 	models.DeleteUser(&user)
 	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
 		"message": "删除用户成功",
+		"data":    user,
 	})
 }
 
@@ -102,6 +112,7 @@ func UpdateUser(c *gin.Context) {
 	_, err := govalidator.ValidateStruct(user)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
 			"message": err.Error(),
 		})
 		return
@@ -110,7 +121,10 @@ func UpdateUser(c *gin.Context) {
 	models.UpdateUser(&user)
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "更新用户成功",
+
+		"code":    0,
+		"message": "修改用户成功",
+		"data":    user,
 	})
 }
 
@@ -126,24 +140,34 @@ func LoginUser(c *gin.Context) {
 	name := c.PostForm("name")
 	plainpwd := c.PostForm("password")
 
+	// 通过用户名查用户信息
 	user := models.FindUserByName(name)
 	if user.Name == "" {
 		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
 			"message": "用户名不存在",
 		})
 		return
 	}
+
+	// 验证密码是否正确
 	valid := utils.ValidPassword(plainpwd, user.Salt, user.PassWord)
 
 	if !valid {
 		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
 			"message": "密码错误",
 		})
 		return
 
 	}
 
+	// 生成 token
+	models.GenerateToken(&user)
+
 	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
 		"message": "登陆成功",
+		"data":    user,
 	})
 }
