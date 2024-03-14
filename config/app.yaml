@@ -4,3 +4,10 @@ mysql:
 jwt:
   secret: "qwertyuioplkjhgfdsa4456mnvcxz"
   expire: "24"
+
+redis:
+  addr: "127.0.0.1:6379"
+  password: ""
+  db: 0
+  poolSize: 30
+  minIdleConns: 30

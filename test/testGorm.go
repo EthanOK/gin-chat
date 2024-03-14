@@ -1,10 +1,20 @@
 package main
 
-import "gin-chat/utils"
+import (
+	"gin-chat/models"
+	"gin-chat/utils"
+)
 
 func main() {
+	utils.InitConfig()
+	utils.InitMysql()
 
-	ss := utils.Md5Encode("2dddd22")
-	println(ss)
+	utils.DB.AutoMigrate(&models.UserBasic{})
+
+	utils.DB.AutoMigrate(&models.Message{})
+
+	utils.DB.AutoMigrate(&models.Contact{})
+
+	utils.DB.AutoMigrate(&models.GroupBasic{})
 
 }

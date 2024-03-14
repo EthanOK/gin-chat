@@ -7,9 +7,11 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 // GetUserList
@@ -180,7 +182,7 @@ func LoginUser(c *gin.Context) {
 // @Router /getUserByToken [get]
 func GetUserByToken(c *gin.Context) {
 	token := c.Query("token")
-	claims, err := models.ParseToken(token)
+	claims, err := utils.ParseToken(token)
 
 	if err != nil {
 
@@ -197,4 +199,43 @@ func GetUserByToken(c *gin.Context) {
 		"message": "解析成功",
 		"data":    claims,
 	})
+}
+
+var upGrade = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+func SendMessage(c *gin.Context) {
+	ws, err := upGrade.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer func(ws *websocket.Conn) {
+		err := ws.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+
+	}(ws)
+
+	MsgHander(ws, c)
+
+}
+
+func MsgHander(ws *websocket.Conn, c *gin.Context) {
+
+	msg, err := utils.Subscribe(c, utils.PublishChannel)
+	if err != nil {
+		fmt.Println(err)
+	}
+	tm := time.Now().Format("2006-01-02 15:04:05")
+	m := fmt.Sprintf("[ws][%s] %s", tm, msg)
+
+	err = ws.WriteMessage(websocket.TextMessage, []byte(m))
+	if err != nil {
+		fmt.Println(err)
+	}
 }

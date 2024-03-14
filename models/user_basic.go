@@ -3,10 +3,7 @@ package models
 import (
 	"database/sql"
 	"gin-chat/utils"
-	"time"
 
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
@@ -25,12 +22,6 @@ type UserBasic struct {
 	LoginOutTime  sql.NullTime
 	IsLogout      bool
 	DeviceInfo    string
-}
-
-type Claims struct {
-	Name     string
-	PassWord string
-	jwt.RegisteredClaims
 }
 
 func (user *UserBasic) TableName() string {
@@ -91,44 +82,10 @@ func UpdateUser(user *UserBasic) *gorm.DB {
 
 func GenerateToken(user *UserBasic) *gorm.DB {
 
-	identity, _ := generateToken(user.Name, user.PassWord)
+	identity, _ := utils.GenerateToken(user.Name, user.PassWord)
 
 	return utils.DB.Model(&user).
 		Where("id = ?", user.ID).
 		Update("identity", identity)
 
-}
-
-func generateToken(name string, password string) (string, error) {
-
-	claims := Claims{
-		name,
-		password,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			Issuer:    "ethan",
-		},
-	}
-
-	mySigningKey := []byte(viper.GetString("jwt.secret"))
-
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(mySigningKey)
-	return token, err
-}
-
-func ParseToken(token string) (*Claims, error) {
-	tokenClaims, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(viper.GetString("jwt.secret")), nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if tokenClaims != nil {
-		if claims, ok := tokenClaims.Claims.(*Claims); ok && tokenClaims.Valid {
-			return claims, nil
-		}
-	}
-
-	return nil, err
 }

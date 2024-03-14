@@ -31,6 +31,8 @@ func Router() *gin.Engine {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
+	r.GET("/user/sendMessage", service.SendMessage)
+
 	return r
 
 }
