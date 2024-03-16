@@ -33,6 +33,8 @@ func Router() *gin.Engine {
 
 	r.GET("/user/sendMessage", service.SendMessage)
 
+	r.GET("/user/sendUserMessage", service.SendUserMessage)
+
 	return r
 
 }
