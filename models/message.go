@@ -112,6 +112,8 @@ func receiveProc(node *Node) {
 			return
 		}
 
+		broadMsg(data)
+
 		// 处理数据
 		fmt.Println("[ws]<<<<<<<", data)
 
@@ -132,7 +134,7 @@ func init() {
 
 func udpSendProc() {
 	conn, err := net.DialUDP("udp", nil, &net.UDPAddr{
-		IP:   net.IPv4(192, 168, 0, 114),
+		IP:   net.IPv4(192, 168, 1, 1),
 		Port: 3000,
 	})
 
