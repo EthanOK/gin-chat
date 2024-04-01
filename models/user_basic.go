@@ -60,8 +60,6 @@ func FindUserByEmail(email string) (user UserBasic) {
 
 func CreateUser(user *UserBasic) *gorm.DB {
 
-	utils.DB.AutoMigrate(&UserBasic{})
-
 	return utils.DB.Create(&user)
 }
 

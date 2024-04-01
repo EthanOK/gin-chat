@@ -11,26 +11,38 @@ import (
 )
 
 func Router() *gin.Engine {
-	docs.SwaggerInfo.BasePath = ""
 
 	r := gin.Default()
 
-	r.GET("/index", service.GetIndex)
+	//	swagger
+	docs.SwaggerInfo.BasePath = ""
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
+	// 加载静态文件
+	r.Static("/asset", "asset/")
+	r.LoadHTMLGlob("views/**/*")
+
+	// 首页 登录界面
+	r.GET("/", service.GetIndex)
+
+	r.GET("/index", service.GetIndex)
+	// 注册界面
+	r.GET("/register", service.GetRegister)
+
+	// 用户模块
 	r.GET("/user/getUserList", service.GetUserList)
 
 	r.GET("/getUserByToken", service.GetUserByToken)
 
 	r.POST("/user/createUser", service.CreateUser)
 
-	r.POST("/user/loginUser", service.LoginUser)
+	r.POST("/user/login", service.LoginUser)
 
 	r.POST("/user/deleteUser", service.DeleteUser)
 
 	r.POST("/user/updateUser", service.UpdateUser)
 
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
-
+	// 发送消息
 	r.GET("/user/sendMessage", service.SendMessage)
 
 	r.GET("/user/sendUserMessage", service.SendUserMessage)

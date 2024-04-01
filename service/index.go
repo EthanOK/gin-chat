@@ -1,7 +1,7 @@
 package service
 
 import (
-	"net/http"
+	"html/template"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,7 +13,20 @@ import (
 // @Success 200 {string} Welcome!!!
 // @Router /index [get]
 func GetIndex(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Welcome Gin Chat!!!",
-	})
+	temp, err := template.ParseFiles("index.html", "views/chat/head.html")
+
+	if err != nil {
+		panic(err)
+
+	}
+	temp.Execute(c.Writer, "index")
+}
+
+func GetRegister(c *gin.Context) {
+	temp, err := template.ParseFiles("views/user/register.html")
+	if err != nil {
+		panic(err)
+
+	}
+	temp.Execute(c.Writer, "register")
 }

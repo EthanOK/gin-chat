@@ -17,8 +17,8 @@ type Message struct {
 	gorm.Model
 	FromId   uint   // 发送者id
 	TargetId uint   // 接收者id
-	Type     uint   // 发送类型 群聊 私聊 广播
-	Media    uint   // 消息类型 文字 图片 音频
+	Type     uint   // 发送类型 1私聊 2群聊 3广播
+	Media    uint   // 消息类型 1文字 2图片 3音频
 	Content  string // 内容
 	Pic      string // 图片
 	Url      string // 链接
@@ -42,6 +42,7 @@ var clientMap map[int64]*Node = make(map[int64]*Node, 0)
 // 读写锁
 var rwLocker sync.RWMutex
 
+// 发送者Id 接受者Id 发送类型 消息类型 消息内容
 func Chat(writer http.ResponseWriter, request *http.Request) {
 
 	// 1. 获取参数

@@ -44,6 +44,13 @@ func CreateUser(c *gin.Context) {
 	password := c.PostForm("password")
 	repassword := c.PostForm("repassword")
 	salt := fmt.Sprintf("%06d", rand.Int31())
+	if user.Name == "" || password == "" || repassword == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
+			"message": "参数不能为空",
+		})
+		return
+	}
 
 	// 通过用户名查用户信息
 	data := models.FindUserByName(user.Name)
@@ -136,7 +143,7 @@ func UpdateUser(c *gin.Context) {
 // @param name formData string true "name"
 // @param password formData string true "password"
 // @Success 200 {string} json{"code","message"}
-// @Router /user/loginUser [post]
+// @Router /user/login [post]
 func LoginUser(c *gin.Context) {
 
 	name := c.PostForm("name")

@@ -86,7 +86,7 @@ paths:
       summary: 获取用户列表
       tags:
       - 用户模块
-  /user/loginUser:
+  /user/login:
     post:
       parameters:
       - description: name

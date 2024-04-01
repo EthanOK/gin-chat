@@ -49,6 +49,7 @@ func InitMysql() {
 	DB = db_
 
 }
+
 func InitRedis() {
 	Redis = redis.NewClient(&redis.Options{
 		Addr:         viper.GetString("redis.addr"),

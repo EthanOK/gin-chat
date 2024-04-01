@@ -147,7 +147,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/loginUser": {
+        "/user/login": {
             "post": {
                 "tags": [
                     "用户模块"

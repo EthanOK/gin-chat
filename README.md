@@ -115,6 +115,12 @@ go get -u github.com/swaggo/files
 swag init
 ```
 
+- 查看接口文档
+
+```
+    http://localhost:8080/swagger/index.html
+```
+
 ## 四、日志打印
 
 ```go

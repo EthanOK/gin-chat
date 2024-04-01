@@ -13,6 +13,8 @@ func main() {
 
 	utils.InitRedis()
 
+	// sql.InitTables()
+
 	r := router.Router()
 
 	r.Run(":8080") // (for windows "localhost:8080")
