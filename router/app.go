@@ -24,12 +24,14 @@ func Router() *gin.Engine {
 
 	// 首页 登录界面
 	r.GET("/", service.GetIndex)
-
+	// 首页 登录界面
 	r.GET("/index", service.GetIndex)
 	// 注册界面
 	r.GET("/register", service.GetRegister)
+	// 聊天界面
+	r.GET("/chat", service.GetChat)
 
-	// 用户模块
+	// 用户模块 api 接口
 	r.GET("/user/getUserList", service.GetUserList)
 
 	r.GET("/getUserByToken", service.GetUserByToken)
@@ -41,6 +43,9 @@ func Router() *gin.Engine {
 	r.POST("/user/deleteUser", service.DeleteUser)
 
 	r.POST("/user/updateUser", service.UpdateUser)
+
+	// 聊天模块 api 接口
+	r.POST("/searchFriends", service.SearchFriends)
 
 	// 发送消息
 	r.GET("/user/sendMessage", service.SendMessage)
