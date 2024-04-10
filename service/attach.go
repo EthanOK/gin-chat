@@ -14,15 +14,26 @@ func Upload(c *gin.Context) {
 	writer := c.Writer
 	request := c.Request
 	file, head, err := request.FormFile("file")
+	filetype := request.FormValue("filetype")
+
 	if err != nil {
 		utils.ResponseFail(writer, err.Error())
 		return
 	}
 	suffix := ".png"
+
 	ofilName := strings.Split(head.Filename, ".")
 	if len(ofilName) > 1 {
 		suffix = "." + ofilName[len(ofilName)-1]
 	}
+
+	if filetype == ".mp3" {
+		suffix = ".mp3"
+
+	} else if filetype == ".mp4" {
+		suffix = ".mp4"
+	}
+
 	fileName := utils.GetUUID() + suffix
 	url := "./asset/upload/" + fileName
 	desFile, err := os.Create(url)
