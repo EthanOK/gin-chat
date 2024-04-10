@@ -202,7 +202,7 @@ func disPatch(data []byte) {
 
 	switch msg.Type {
 	case 1: // 私聊
-		sendMsg(msg.UserId, data)
+		sendMsg(msg.TargetId, data)
 		// case 2:
 		// 	sendGroupMsg(msg)
 		// case 3:
