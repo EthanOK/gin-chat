@@ -65,3 +65,7 @@ func GetChat(c *gin.Context) {
 
 	temp.Execute(c.Writer, user)
 }
+
+func Chat(c *gin.Context) {
+	models.Chat(c.Writer, c.Request)
+}

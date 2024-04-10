@@ -47,6 +47,9 @@ func Router() *gin.Engine {
 	// 聊天模块 api 接口
 	r.POST("/searchFriends", service.SearchFriends)
 
+	// webSocket chat
+	r.GET("/wsChat", service.Chat)
+
 	// 发送消息
 	r.GET("/user/sendMessage", service.SendMessage)
 

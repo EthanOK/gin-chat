@@ -54,6 +54,12 @@ func FindUserByName(name string) (user UserBasic) {
 	return
 }
 
+func FindNameByUserId(id uint) string {
+	var user UserBasic
+	utils.DB.Where("id = ?", id).First(&user)
+	return user.Name
+}
+
 func FindUserByPhone(phone string) (user UserBasic) {
 
 	utils.DB.Where("phone = ?", phone).First(&user)

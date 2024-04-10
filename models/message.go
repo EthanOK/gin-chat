@@ -15,7 +15,7 @@ import (
 
 type Message struct {
 	gorm.Model
-	FromId   uint   // 发送者id
+	UserId   uint   // 发送者id
 	TargetId uint   // 接收者id
 	Type     uint   // 发送类型 1私聊 2群聊 3广播
 	Media    uint   // 消息类型 1文字 2图片 3音频
@@ -49,7 +49,6 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 
 	userId, _ := strconv.ParseInt(query.Get("userId"), 10, 64)
-	targetId, _ := strconv.ParseInt(query.Get("targetId"), 10, 64)
 	// context := query.Get("context")
 	// sendType := query.Get("type")
 
@@ -75,7 +74,7 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 
 	// 3. 用户关系
 
-	// 4. userId 与 node绑定 并加锁
+	// 4. userId 与 node绑定 并加锁 谁进来谁在线
 	rwLocker.Lock()
 	clientMap[userId] = node
 	rwLocker.Unlock()
@@ -86,7 +85,10 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 	// 6. 完成接收逻辑
 	go receiveProc(node)
 
-	sendMsg(uint(userId), uint(targetId), []byte("欢迎进入聊天室"))
+	// 通过userId 获取name
+
+	hello := "欢迎用户" + FindNameByUserId(uint(userId)) + "进入聊天室"
+	sendMsg(uint(userId), []byte(hello))
 
 }
 
@@ -94,6 +96,7 @@ func sendProc(node *Node) {
 	for {
 		select {
 		case data := <-node.DataQueue:
+			fmt.Println("[ws] sendProc >>>>", string(data))
 			err := node.Conn.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
 				fmt.Println(err)
@@ -112,11 +115,12 @@ func receiveProc(node *Node) {
 			fmt.Println(err)
 			return
 		}
-
+		// 处理接受到的数据
+		disPatch(data)
+		// 广播数据
 		broadMsg(data)
 
-		// 处理数据
-		fmt.Println("[ws]<<<<<<<", data)
+		fmt.Println("[ws] receiveProc <<<<", string(data))
 
 	}
 
@@ -131,11 +135,13 @@ func broadMsg(data []byte) {
 func init() {
 	go udpSendProc()
 	go udpReceiveProc()
+	fmt.Println("init success!!!")
 }
 
+// udp 数据发送
 func udpSendProc() {
 	conn, err := net.DialUDP("udp", nil, &net.UDPAddr{
-		IP:   net.IPv4(192, 168, 1, 1),
+		IP:   net.IPv4(192, 168, 0, 255),
 		Port: 3000,
 	})
 
@@ -148,6 +154,7 @@ func udpSendProc() {
 	for {
 		select {
 		case data := <-udpsendChan:
+			fmt.Println("[udp] sendProc >>>>", string(data))
 			_, err := conn.Write(data)
 			if err != nil {
 				fmt.Println(err)
@@ -175,10 +182,15 @@ func udpReceiveProc() {
 			fmt.Println(err)
 			return
 		}
+
+		fmt.Println("[udp] receiveProc <<<<", string(buf[:n]))
+
 		disPatch(buf[:n])
 	}
 
 }
+
+// 后端调度逻辑处理
 func disPatch(data []byte) {
 	msg := Message{}
 	// json 转换
@@ -190,7 +202,7 @@ func disPatch(data []byte) {
 
 	switch msg.Type {
 	case 1: // 私聊
-		sendMsg(msg.FromId, msg.TargetId, data)
+		sendMsg(msg.UserId, data)
 		// case 2:
 		// 	sendGroupMsg(msg)
 		// case 3:
@@ -199,14 +211,14 @@ func disPatch(data []byte) {
 
 }
 
-func sendMsg(userId uint, targetId uint, msg []byte) {
+func sendMsg(userId uint, msg []byte) {
+	fmt.Println("sendMsg >>> userId:", userId, "message:", string(msg))
 	// 1. 获取接收者的node
 	rwLocker.RLock()
 	node, ok := clientMap[int64(userId)]
 	rwLocker.RUnlock()
-	if !ok {
-		fmt.Println("用户不在线")
-		return
+	if ok {
+		node.DataQueue <- msg
 	}
-	node.DataQueue <- msg
+
 }

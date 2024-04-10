@@ -82,7 +82,7 @@
                     TargetId: -1,
                     Type: -1,
                     CreateTime: new Date().getTime(),
-                    userId: userId()
+                    UserId: userId()
                 },
                 plugins: [
                     {
@@ -142,7 +142,7 @@
                 this.loadfriends();
                 this.loadcommunitys();
                 this.loaddoutures();
-                setInterval(this.heartbeat, 10 * 1000);
+                // setInterval(this.heartbeat, 10 * 1000);
                 var user = userInfo()
                 //初始化websocket
                 this.initwebsocket()
@@ -270,7 +270,7 @@
                     // console.log(">>>>>>>>>>>", msg)
                     var data = {
                     }
-                    data.ismine = userId() == msg.userId;
+                    data.ismine = userId() == msg.UserId;
                     //console.log(data.ismine,userId(),msg.userid)
                     data.user = user;
                     data.msg = msg;
@@ -457,7 +457,7 @@
 
                 },
                 initwebsocket: function () {
-                    var url = "ws://" + location.host + "/user/sendUserMessage?userId=" + userId() + "&token=" + util.parseQuery("token");
+                    var url = "ws://" + location.host + "/wsChat?userId=" + userId() + "&token=" + util.parseQuery("token");
                     this.webSocket = new WebSocket(url);
                     //消息处理
                     this.webSocket.onmessage = function (evt) {
