@@ -1,24 +1,47 @@
 package service
 
 import (
+	"gin-chat/models"
 	"gin-chat/utils"
 	"io"
+	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 func Upload(c *gin.Context) {
+
+	url := upload(c.Writer, c.Request)
+
+	if url != "" {
+		utils.ResponseOK(c.Writer, url, "上传成功")
+	}
+
+}
+
+func UploadAvatar(c *gin.Context) {
+	url := upload(c.Writer, c.Request)
+
+	if url != "" {
+
+		userId, _ := strconv.Atoi(c.Request.FormValue("userid"))
+		models.UpdateAvatarByUserId(uint(userId), url)
+		utils.ResponseOK(c.Writer, url, "更新头像成功")
+	}
+
+}
+
+func upload(writer gin.ResponseWriter, request *http.Request) string {
 	// 实现文件上传功能
-	writer := c.Writer
-	request := c.Request
 	file, head, err := request.FormFile("file")
 	filetype := request.FormValue("filetype")
 
 	if err != nil {
 		utils.ResponseFail(writer, err.Error())
-		return
+		return ""
 	}
 	suffix := ".png"
 
@@ -40,15 +63,15 @@ func Upload(c *gin.Context) {
 
 	if err != nil {
 		utils.ResponseFail(writer, err.Error())
-		return
+		return ""
 	}
 
 	_, errr := io.Copy(desFile, file)
 	if errr != nil {
 		utils.ResponseFail(writer, errr.Error())
-		return
+		return ""
 	}
 
-	utils.ResponseOK(writer, url, "上传成功")
+	return url
 
 }

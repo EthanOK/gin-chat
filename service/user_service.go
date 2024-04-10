@@ -107,6 +107,7 @@ func DeleteUser(c *gin.Context) {
 // @param password formData string fase "password"
 // @param phone formData string false "phone"
 // @param email formData string false "email"
+// @param avatar formData string false "icon"
 // @Success 200 {string} json{"code","message"}
 // @Router /user/updateUser [post]
 func UpdateUser(c *gin.Context) {
@@ -117,6 +118,7 @@ func UpdateUser(c *gin.Context) {
 	user.PassWord = c.PostForm("password")
 	user.Phone = c.PostForm("phone")
 	user.Email = c.PostForm("email")
+	user.Avatar = c.PostForm("icon")
 
 	_, err := govalidator.ValidateStruct(user)
 	if err != nil {

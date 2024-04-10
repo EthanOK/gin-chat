@@ -22,6 +22,7 @@ type UserBasic struct {
 	LoginOutTime  sql.NullTime
 	IsLogout      bool
 	DeviceInfo    string
+	Avatar        string
 }
 
 func (user *UserBasic) TableName() string {
@@ -87,7 +88,13 @@ func UpdateUser(user *UserBasic) *gorm.DB {
 			Name:     user.Name,
 			PassWord: user.PassWord,
 			Phone:    user.Phone,
-			Email:    user.Email})
+			Email:    user.Email,
+			Avatar:   user.Avatar,
+		})
+}
+
+func UpdateAvatarByUserId(userId uint, avatar string) *gorm.DB {
+	return utils.DB.Model(&UserBasic{}).Where("id = ?", userId).Update("avatar", avatar)
 }
 
 func GenerateToken(user *UserBasic) *gorm.DB {

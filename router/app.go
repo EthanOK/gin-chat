@@ -56,6 +56,8 @@ func Router() *gin.Engine {
 	r.GET("/user/sendUserMessage", service.SendUserMessage)
 	// 上传文件
 	r.POST("/attach/upload", service.Upload)
+	// 上传并更新头像 Avatar
+	r.POST("/attach/uploadAvatar", service.UploadAvatar)
 
 	return r
 

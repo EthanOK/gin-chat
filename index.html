@@ -54,7 +54,8 @@
                         mui.toast(res.message)
                     }else{
                         url="/chat?userId="+res.data.ID+"&token="+res.data.Identity
-                        console.log(url)
+                        userInfo(res.data)
+
                         //跳转
                         location.replace(url)
                         mui.toast("登录成功,即将跳转")
