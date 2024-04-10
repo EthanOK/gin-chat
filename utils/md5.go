@@ -3,7 +3,10 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 )
 
 // 小写
@@ -31,4 +34,9 @@ func MakePassword(plainpwd, salt string) string {
 func ValidPassword(plainpwd, salt, password string) bool {
 	return Md5Encode(plainpwd+salt) == password
 
+}
+
+func GetUUID() string {
+	str := fmt.Sprintf("%s%d", time.Now().Format("20060102150405"), rand.Int31n(100))
+	return str
 }

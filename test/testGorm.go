@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"gin-chat/utils"
 )
 
@@ -15,5 +16,7 @@ func main() {
 	// utils.DB.AutoMigrate(&models.Contact{})
 
 	// utils.DB.AutoMigrate(&models.GroupBasic{})
+
+	fmt.Println(utils.GetUUID())
 
 }
