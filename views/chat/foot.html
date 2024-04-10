@@ -435,23 +435,22 @@
                     }
                 },
                 onmessage: function (data) {
-                    this.loaduserinfo(data.userId, function (user) {
-
-                        this.showmsg(user, data)
-                        this.friends.map((item) => {
-                            if (item.ID == data.userId) {
-                                // 1文字 2表情包 3图片 4音频
-                                if (data.Media === 1) {
-                                    item.memo = data.Content
-                                } else if (data.Media === 2) {
-                                    item.memo = data.Url
-                                } else if (data.Media === 3) {
-                                    item.memo = "[语音]"
-                                } else if (data.Media === 4) {
-                                    item.memo = "[图片]"
-                                }
-                            }
-                        })
+                    this.loaduserinfo(data.UserId, function (user) {           
+                        this.showmsg(user, data);
+                        // this.friends.map((item) => {
+                        //     if (item.ID == data.userId) {
+                        //         // 1文字 2表情包 3图片 4音频
+                        //         if (data.Media === 1) {
+                        //             item.memo = data.Content
+                        //         } else if (data.Media === 2) {
+                        //             item.memo = data.Url
+                        //         } else if (data.Media === 3) {
+                        //             item.memo = "[语音]"
+                        //         } else if (data.Media === 4) {
+                        //             item.memo = "[图片]"
+                        //         }
+                        //     }
+                        // })
 
                     }.bind(this))
 
