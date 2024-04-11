@@ -567,22 +567,22 @@
                     })
                 },
                 updateUserInfo() {
-                    //console.log("createcommunity")
+                    //console.log("updateUserInfo")
                     this.info.id = userId()
-                    console.log("updateUserInfo``````",this.info)
-                    util.post("/user/updateUser", this.info).then(res => {
-                        console.log(res)
+                    
+                    util.post("/user/updateUser", this.info).then(res => {                   
                         let userInfo = JSON.parse(sessionStorage.getItem('userinfo') || '{}');
                         userInfo.Avatar = this.info.icon;
                         userInfo.Name = this.info.name;
                         sessionStorage.setItem('userinfo', JSON.stringify(userInfo))
-                        if (res.Code != 0) {
+                        if (res.code != 0) {
                             mui.toast(res.message)
                         } else {
                             //location.replace("localhost:8081")
-                            //location.href = "/"
+                            // location.href = "/"
                             mui.toast("修改成功")
-                            //goBack()
+                            // 刷新当前页面 并且跳转到个人中心
+                            location.reload();                            
                         }
                     })
                 },
