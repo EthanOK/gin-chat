@@ -265,3 +265,17 @@ func SearchFriends(c *gin.Context) {
 	// })
 	utils.ResponseOKList(c.Writer, friends, len(friends))
 }
+
+func AddFriend(c *gin.Context) {
+	userId, _ := strconv.Atoi(c.PostForm("userId"))
+	targetName := c.PostForm("targetName")
+
+	massage := models.AddFriendByName(uint(userId), targetName)
+
+	if massage == "" {
+		utils.ResponseOK(c.Writer, "Success", "添加好友成功")
+	} else {
+		utils.ResponseFail(c.Writer, massage)
+	}
+
+}

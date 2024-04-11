@@ -112,7 +112,7 @@ func receiveProc(node *Node) {
 		}
 		// 处理接受到的数据
 		disPatch(data)
-		// 广播数据
+		// 广播消息到局域网
 		// broadMsg(data)
 
 		fmt.Println("[ws] receiveProc <<<<", string(data))
