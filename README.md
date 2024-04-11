@@ -237,6 +237,7 @@ func DeleteUser(c *gin.Context) {
 // @param password formData string fase "password"
 // @param phone formData string false "phone"
 // @param email formData string false "email"
+// @param avatar formData string false "icon"
 // @Success 200 {string} json{"code","message"}
 // @Router /user/updateUser [post]
 func UpdateUser(c *gin.Context) {
@@ -247,6 +248,7 @@ func UpdateUser(c *gin.Context) {
 	user.PassWord = c.PostForm("password")
 	user.Phone = c.PostForm("phone")
 	user.Email = c.PostForm("email")
+	user.Avatar = c.PostForm("icon")
 
 	_, err := govalidator.ValidateStruct(user)
 	if err != nil {
@@ -392,10 +394,126 @@ func ParseToken(token string) (*Claims, error) {
 }
 ```
 
-### 发送消息
+## 六、WebSocket 实现 消息通信
 
 ```go
+func Chat(writer http.ResponseWriter, request *http.Request) {
 
+	// 1. 获取参数
+	query := request.URL.Query()
+	userId, _ := strconv.ParseInt(query.Get("userId"), 10, 64)
+	isValid := true
+
+	// 2. 建立一个 WebSocket 连接
+	conn, err := (&websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return isValid
+		},
+	}).Upgrade(writer, request, nil)
+
+	if err != nil {
+		fmt.Println(err)
+
+		return
+	}
+
+	// 3. 定义 WebSocket 节点
+	node := &Node{
+		Conn:      conn,
+		DataQueue: make(chan []byte, 50),
+		GroupSets: set.New(set.ThreadSafe),
+	}
+
+	// 4. userId 与 node绑定 并加锁 谁进来谁在线
+	rwLocker.Lock()
+	clientMap[userId] = node
+	rwLocker.Unlock()
+
+	// 5. 完成发送消息到 WebSocket 逻辑
+	go sendProc(node)
+
+	// 6. 完成从 WebSocket 接收消息逻辑
+	go receiveProc(node)
+
+	// 7. 后台向登录用户发送欢迎消息
+	hello := "欢迎用户" + FindNameByUserId(uint(userId)) + "进入聊天室"
+	sendMsg(uint(userId), []byte(hello))
+
+}
 ```
 
-### 接收消息
+### 1. 接受 WebSocket 消息的处理逻辑
+
+```go
+func receiveProc(node *Node) {
+	for {
+		// 从 Websocket 中读取一条消息
+		_, data, err := node.Conn.ReadMessage()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		// 处理接受到的数据
+		disPatch(data)
+		// 广播数据
+		broadMsg(data)
+
+		fmt.Println("[ws] receiveProc <<<<", string(data))
+
+	}
+}
+```
+
+### 2. 发送 WebSocket 消息的处理逻辑
+
+```go
+func sendProc(node *Node) {
+	// 从 node.DataQueue 通道中读取数据，并将其发送到 WebSocket 中
+	for {
+		select {
+		case data := <-node.DataQueue:
+			fmt.Println("[ws] sendProc >>>>", string(data))
+			err := node.Conn.WriteMessage(websocket.TextMessage, data)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+		}
+	}
+}
+```
+
+### 3. 处理接受到的数据
+
+```go
+func disPatch(data []byte) {
+	msg := Message{}
+	// json 转换
+	err := json.Unmarshal(data, &msg)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	switch msg.Type {
+	case 1: // 私聊
+		sendMsg(msg.TargetId, data)
+		// case 2:
+		// 	sendGroupMsg(msg)
+		// case 3:
+		// 	broadMsg(data)
+	}
+}
+
+func sendMsg(userId uint, msg []byte) {
+	fmt.Println("sendMsg >>> userId:", userId, "message:", string(msg))
+
+	rwLocker.RLock()
+	node, ok := clientMap[int64(userId)]
+	rwLocker.RUnlock()
+
+	if ok {
+		node.DataQueue <- msg
+	}
+}
+```

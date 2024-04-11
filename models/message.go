@@ -47,12 +47,10 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 
 	// 1. 获取参数
 	query := request.URL.Query()
-
 	userId, _ := strconv.ParseInt(query.Get("userId"), 10, 64)
-	// context := query.Get("context")
-	// sendType := query.Get("type")
-
 	isValid := true
+
+	// 2. 建立一个 WebSocket 连接
 	conn, err := (&websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return isValid
@@ -65,34 +63,32 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	// 2. 获取 conn
+	// 3. 定义 WebSocket 节点
 	node := &Node{
 		Conn:      conn,
 		DataQueue: make(chan []byte, 50),
 		GroupSets: set.New(set.ThreadSafe),
 	}
 
-	// 3. 用户关系
-
 	// 4. userId 与 node绑定 并加锁 谁进来谁在线
 	rwLocker.Lock()
 	clientMap[userId] = node
 	rwLocker.Unlock()
 
-	// 5. 完成发送逻辑
+	// 5. 完成发送消息到 WebSocket 逻辑
 	go sendProc(node)
 
-	// 6. 完成接收逻辑
+	// 6. 完成从 WebSocket 接收消息逻辑
 	go receiveProc(node)
 
-	// 通过userId 获取name
-
+	// 7. 后台向登录用户发送欢迎消息
 	hello := "欢迎用户" + FindNameByUserId(uint(userId)) + "进入聊天室"
 	sendMsg(uint(userId), []byte(hello))
 
 }
 
 func sendProc(node *Node) {
+	// 从 node.DataQueue 通道中读取数据，并将其发送到 WebSocket 中
 	for {
 		select {
 		case data := <-node.DataQueue:
@@ -104,12 +100,11 @@ func sendProc(node *Node) {
 			}
 		}
 	}
-
 }
 
 func receiveProc(node *Node) {
 	for {
-
+		// 从 Websocket 中读取一条消息
 		_, data, err := node.Conn.ReadMessage()
 		if err != nil {
 			fmt.Println(err)
@@ -118,12 +113,11 @@ func receiveProc(node *Node) {
 		// 处理接受到的数据
 		disPatch(data)
 		// 广播数据
-		broadMsg(data)
+		// broadMsg(data)
 
 		fmt.Println("[ws] receiveProc <<<<", string(data))
 
 	}
-
 }
 
 var udpsendChan chan []byte = make(chan []byte, 10)
@@ -208,17 +202,16 @@ func disPatch(data []byte) {
 		// case 3:
 		// 	broadMsg(data)
 	}
-
 }
 
 func sendMsg(userId uint, msg []byte) {
 	fmt.Println("sendMsg >>> userId:", userId, "message:", string(msg))
-	// 1. 获取接收者的node
+
 	rwLocker.RLock()
 	node, ok := clientMap[int64(userId)]
 	rwLocker.RUnlock()
+
 	if ok {
 		node.DataQueue <- msg
 	}
-
 }

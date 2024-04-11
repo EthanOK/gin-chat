@@ -216,6 +216,12 @@ const docTemplate = `{
                         "description": "email",
                         "name": "email",
                         "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "icon",
+                        "name": "avatar",
+                        "in": "formData"
                     }
                 ],
                 "responses": {

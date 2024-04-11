@@ -131,6 +131,10 @@ paths:
         in: formData
         name: email
         type: string
+      - description: icon
+        in: formData
+        name: avatar
+        type: string
       responses:
         "200":
           description: code","message"}
