@@ -2,6 +2,7 @@ package main
 
 import (
 	"gin-chat/router"
+	"gin-chat/sql"
 	"gin-chat/utils"
 )
 
@@ -13,7 +14,7 @@ func main() {
 
 	utils.InitRedis()
 
-	// sql.InitTables()
+	sql.InitTables()
 
 	r := router.Router()
 

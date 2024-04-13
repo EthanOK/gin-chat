@@ -279,3 +279,55 @@ func AddFriend(c *gin.Context) {
 	}
 
 }
+
+func CreateCommunity(c *gin.Context) {
+
+	community := models.Community{}
+
+	community.Name = c.PostForm("name")
+	ownerId, _ := strconv.Atoi(c.PostForm("ownerId"))
+	community.OwnerId = uint(ownerId)
+	community.Icon = c.PostForm("icon")
+	community.Desc = c.PostForm("desc")
+	category, _ := strconv.Atoi(c.PostForm("cate"))
+	community.Category = uint(category)
+
+	code, message := models.CreateCommunity(&community)
+
+	if code == -1 {
+		utils.ResponseFail(c.Writer, message)
+	} else if code == 0 {
+
+		utils.ResponseOK(c.Writer, "Success", message)
+	}
+
+}
+
+func Loadcommunity(c *gin.Context) {
+
+	ownerId, _ := strconv.Atoi(c.PostForm("ownerId"))
+
+	communitys, code, message := models.GetCommunityList(uint(ownerId))
+
+	if code == -1 {
+		utils.ResponseFail(c.Writer, message)
+	} else if code == 0 {
+		utils.ResponseOKList(c.Writer, communitys, len(communitys))
+	}
+
+}
+
+func JoinGroup(c *gin.Context) {
+	userId, _ := strconv.Atoi(c.PostForm("userId"))
+
+	communityId, _ := strconv.Atoi(c.PostForm("comId"))
+
+	code, message := models.AddCommunityById(uint(userId), uint(communityId))
+
+	if code == -1 {
+		utils.ResponseFail(c.Writer, message)
+	} else if code == 0 {
+		utils.ResponseOK(c.Writer, "Success", message)
+	}
+
+}
