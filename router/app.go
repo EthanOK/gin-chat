@@ -67,6 +67,9 @@ func Router() *gin.Engine {
 	// 上传并更新头像 Avatar
 	r.POST("/attach/uploadAvatar", service.UploadAvatar)
 
+	// redis 消息
+	r.POST("/user/redisMsg", service.RedisMsg)
+
 	return r
 
 }

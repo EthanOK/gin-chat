@@ -1,14 +1,19 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"gin-chat/utils"
 	"net"
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/redis/go-redis/v9"
+	"github.com/spf13/viper"
 	"gopkg.in/fatih/set.v0"
 	"gorm.io/gorm"
 )
@@ -32,6 +37,7 @@ func (msg *Message) TableName() string {
 
 type Node struct {
 	Conn      *websocket.Conn
+	Addr      string //客户端地址
 	DataQueue chan []byte
 	GroupSets set.Interface
 }
@@ -47,7 +53,8 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 
 	// 1. 获取参数
 	query := request.URL.Query()
-	userId, _ := strconv.ParseInt(query.Get("userId"), 10, 64)
+	userId_ := query.Get("userId")
+	userId, _ := strconv.ParseInt(userId_, 10, 64)
 	isValid := true
 
 	// 2. 建立一个 WebSocket 连接
@@ -66,6 +73,7 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 	// 3. 定义 WebSocket 节点
 	node := &Node{
 		Conn:      conn,
+		Addr:      conn.RemoteAddr().String(), //客户端地址
 		DataQueue: make(chan []byte, 50),
 		GroupSets: set.New(set.ThreadSafe),
 	}
@@ -81,9 +89,12 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 	// 6. 完成从 WebSocket 接收消息逻辑
 	go receiveProc(node)
 
-	// 7. 后台向登录用户发送欢迎消息
-	hello := "欢迎用户" + FindNameByUserId(uint(userId)) + "进入聊天室"
-	sendMsg(uint(userId), []byte(hello))
+	//7.加入在线用户到缓存
+	SetUserOnlineInfo("online_"+userId_, []byte(node.Addr), time.Duration(viper.GetInt("timeout.RedisOnlineTime"))*time.Hour)
+
+	// // 8. 后台向登录用户发送欢迎消息
+	// hello := "欢迎用户" + FindNameByUserId(uint(userId)) + "进入聊天室"
+	// sendMsg(uint(userId), []byte(hello))
 
 }
 
@@ -211,7 +222,78 @@ func sendMsg(userId uint, msg []byte) {
 	node, ok := clientMap[int64(userId)]
 	rwLocker.RUnlock()
 
-	if ok {
-		node.DataQueue <- msg
+	jsonMsg := Message{}
+	json.Unmarshal(msg, &jsonMsg)
+	ctx := context.Background()
+	targetIdStr := strconv.Itoa(int(userId))
+	userIdStr := strconv.Itoa(int(jsonMsg.UserId))
+	r, err := utils.Redis.Get(ctx, "online_"+userIdStr).Result()
+	if err != nil {
+		fmt.Println(err)
 	}
+	fmt.Println(r)
+
+	if r != "" {
+		if ok {
+			node.DataQueue <- msg
+		}
+	}
+
+	var key string
+	if userId > jsonMsg.UserId {
+		key = "msg_" + userIdStr + "_" + targetIdStr
+	} else {
+		key = "msg_" + targetIdStr + "_" + userIdStr
+	}
+	res, err := utils.Redis.ZRevRange(ctx, key, 0, -1).Result()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	score := float64(cap(res)) + 1
+	ress, e := utils.Redis.ZAdd(ctx, key, redis.Z{Score: score, Member: msg}).Result()
+	//res, e := utils.Red.Do(ctx, "zadd", key, 1, jsonMsg).Result() //备用 后续拓展 记录完整msg
+	if e != nil {
+		fmt.Println(e)
+	}
+	fmt.Println(ress)
+}
+
+// 获取缓存里面的消息
+func RedisMsg(userIdA int64, userIdB int64, start int64, end int64, isRev bool) []string {
+	rwLocker.RLock()
+	//node, ok := clientMap[userIdA]
+	rwLocker.RUnlock()
+	//jsonMsg := Message{}
+	//json.Unmarshal(msg, &jsonMsg)
+	ctx := context.Background()
+	userIdStr := strconv.Itoa(int(userIdA))
+	targetIdStr := strconv.Itoa(int(userIdB))
+	var key string
+	if userIdA > userIdB {
+		key = "msg_" + targetIdStr + "_" + userIdStr
+	} else {
+		key = "msg_" + userIdStr + "_" + targetIdStr
+	}
+	//key = "msg_" + userIdStr + "_" + targetIdStr
+	//rels, err := utils.Red.ZRevRange(ctx, key, 0, 10).Result()  //根据score倒叙
+
+	var rels []string
+	var err error
+	if isRev {
+		rels, err = utils.Redis.ZRange(ctx, key, start, end).Result()
+	} else {
+		rels, err = utils.Redis.ZRevRange(ctx, key, start, end).Result()
+	}
+	if err != nil {
+		fmt.Println(err) //没有找到
+	}
+	// 发送推送消息
+	/**
+	// 后台通过websoket 推送消息
+	for _, val := range rels {
+		fmt.Println("sendMsg >>> userID: ", userIdA, "  msg:", val)
+		node.DataQueue <- []byte(val)
+	}**/
+	return rels
 }
