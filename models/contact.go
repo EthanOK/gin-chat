@@ -75,6 +75,7 @@ func AddCommunityById(userId, communityId uint) (code int, message string) {
 	return 0, "添加群组成功"
 
 }
+
 func AddFriendByName(userId uint, targetName string) string {
 	user := FindUserByName(targetName)
 	if user.Name == "" {

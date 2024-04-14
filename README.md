@@ -394,6 +394,74 @@ func ParseToken(token string) (*Claims, error) {
 }
 ```
 
+- 添加好友
+
+```go
+// service
+func AddFriend(c *gin.Context) {
+	userId, _ := strconv.Atoi(c.PostForm("userId"))
+	targetName := c.PostForm("targetName")
+
+	massage := models.AddFriendByName(uint(userId), targetName)
+
+	if massage == "" {
+		utils.ResponseOK(c.Writer, "Success", "添加好友成功")
+	} else {
+		utils.ResponseFail(c.Writer, massage)
+	}
+}
+```
+
+```go
+func AddFriendByName(userId uint, targetName string) string {
+	user := FindUserByName(targetName)
+	if user.Name == "" {
+		return "好友不存在"
+
+	}
+	if user.ID == userId {
+		return "不能添加自己"
+	}
+	// 判断是否已经添加
+	var contact Contact
+	utils.DB.Where("owner_id = ? and target_id = ? and type = ?", userId, user.ID, 1).First(&contact)
+	if contact.ID != 0 {
+		return "好友已存在"
+	}
+	// 保证事务的一致性
+	tx := utils.DB.Begin()
+
+	// 在事务中执行第一个操作
+	if err := tx.Create(&Contact{
+		OwnerId:  userId,
+		TargetId: user.ID,
+		Type:     1,
+	}).Error; err != nil {
+		// 如果第一个操作失败，则回滚事务并返回错误
+		tx.Rollback()
+		return "error"
+	}
+
+	// 在事务中执行第二个操作
+	if err := tx.Create(&Contact{
+		OwnerId:  user.ID,
+		TargetId: userId,
+		Type:     1,
+	}).Error; err != nil {
+		// 如果第二个操作失败，则回滚事务并返回错误
+		tx.Rollback()
+		return "error"
+	}
+
+	// 如果两个操作都成功，则提交事务
+	tx.Commit()
+
+	return ""
+}
+```
+
+- 创建群组
+
 ## 六、WebSocket 实现 消息通信
 
 ```go
@@ -516,4 +584,10 @@ func sendMsg(userId uint, msg []byte) {
 		node.DataQueue <- msg
 	}
 }
+```
+
+## 七、Redis 实现 消息存储
+
+```go
+// 初始化 Redis 连接
 ```
