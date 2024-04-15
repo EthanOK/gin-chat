@@ -413,6 +413,7 @@ func AddFriend(c *gin.Context) {
 ```
 
 ```go
+// model
 func AddFriendByName(userId uint, targetName string) string {
 	user := FindUserByName(targetName)
 	if user.Name == "" {
@@ -461,6 +462,71 @@ func AddFriendByName(userId uint, targetName string) string {
 ```
 
 - 创建群组
+
+```go
+// service
+func CreateCommunity(c *gin.Context) {
+
+	community := models.Community{}
+
+	community.Name = c.PostForm("name")
+	ownerId, _ := strconv.Atoi(c.PostForm("ownerId"))
+	community.OwnerId = uint(ownerId)
+	community.Icon = c.PostForm("icon")
+	community.Desc = c.PostForm("desc")
+	category, _ := strconv.Atoi(c.PostForm("cate"))
+	community.Category = uint(category)
+
+	code, message := models.CreateCommunity(&community)
+
+	if code == -1 {
+		utils.ResponseFail(c.Writer, message)
+	} else if code == 0 {
+
+		utils.ResponseOK(c.Writer, "Success", message)
+	}
+
+}
+```
+
+```go
+// model
+func CreateCommunity(community *Community) (code int, message string) {
+	if community.Name == "" {
+		return -1, "群名称不能为空"
+	}
+	if community.OwnerId == 0 {
+		return -1, "群主不能为空"
+	}
+
+	// 保证事务的一致性
+	tx := utils.DB.Begin()
+
+	// 在事务中执行第一个操作
+	if err := tx.Create(&community).Error; err != nil {
+		// 如果第一个操作失败，则回滚事务并返回错误
+		tx.Rollback()
+		return -1, "创建群失败"
+	}
+
+	// 在事务中执行第二个操作
+	if err := tx.Create(&Contact{
+		OwnerId:  community.OwnerId,
+		TargetId: community.ID,
+		Type:     2,
+		Desc:     community.Name,
+	}).Error; err != nil {
+		// 如果第二个操作失败，则回滚事务并返回错误
+		tx.Rollback()
+		return -1, "创建群失败"
+	}
+
+	// 如果两个操作都成功，则提交事务
+	tx.Commit()
+
+	return 0, "群创建成功"
+}
+```
 
 ## 六、WebSocket 实现 消息通信
 
