@@ -331,6 +331,7 @@ func JoinGroup(c *gin.Context) {
 	}
 
 }
+
 func RedisMsg(c *gin.Context) {
 	userIdA, _ := strconv.Atoi(c.PostForm("userIdA"))
 	userIdB, _ := strconv.Atoi(c.PostForm("userIdB"))

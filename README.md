@@ -528,6 +528,57 @@ func CreateCommunity(community *Community) (code int, message string) {
 }
 ```
 
+- 加入群组
+
+```go
+// service
+func JoinGroup(c *gin.Context) {
+	userId, _ := strconv.Atoi(c.PostForm("userId"))
+
+	communityId, _ := strconv.Atoi(c.PostForm("comId"))
+
+	code, message := models.AddCommunityById(uint(userId), uint(communityId))
+
+	if code == -1 {
+		utils.ResponseFail(c.Writer, message)
+	} else if code == 0 {
+		utils.ResponseOK(c.Writer, "Success", message)
+	}
+}
+```
+
+```go
+func AddCommunityById(userId, communityId uint) (code int, message string) {
+	user := FindUserById(userId)
+	if user.Name == "" {
+		return -1, "用户不存在"
+	}
+
+	community := FindCommunityById(communityId)
+
+	if community.Name == "" {
+		return -1, "群组不存在"
+	}
+
+	// 判断是否已经添加群组
+	var contact Contact
+	utils.DB.Where("owner_id = ? and target_id = ? and type = ?", userId, communityId, 2).First(&contact)
+	if contact.ID != 0 {
+		return -1, "早已经添加了"
+	}
+
+	utils.DB.Create(&Contact{
+		OwnerId:  userId,
+		TargetId: communityId,
+		Type:     2,
+		Desc:     community.Name,
+	})
+
+	return 0, "添加群组成功"
+
+}
+```
+
 ## 六、WebSocket 实现 消息通信
 
 ```go

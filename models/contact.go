@@ -46,6 +46,7 @@ func AddFriend(userId, targetId uint) bool {
 	return true
 
 }
+
 func AddCommunityById(userId, communityId uint) (code int, message string) {
 	user := FindUserById(userId)
 	if user.Name == "" {
