@@ -77,7 +77,7 @@ func CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "新增用户成功",
-		"data":    user,
+		"data":    user.Name,
 	})
 }
 
@@ -176,10 +176,18 @@ func LoginUser(c *gin.Context) {
 	// 生成 token
 	models.GenerateToken(&user)
 
+	type SampleUser struct {
+		ID       uint
+		Identity string
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "登陆成功",
-		"data":    user,
+		"data": SampleUser{
+			ID:       user.ID,
+			Identity: user.Identity,
+		},
 	})
 }
 

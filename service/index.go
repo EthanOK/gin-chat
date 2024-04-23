@@ -2,6 +2,7 @@ package service
 
 import (
 	"gin-chat/models"
+	"gin-chat/utils"
 	"html/template"
 
 	"strconv"
@@ -55,10 +56,21 @@ func GetChat(c *gin.Context) {
 	userId, _ := strconv.Atoi(c.Query("userId"))
 	user.ID = uint(userId)
 
-	user.Identity = c.Query("token")
+	token := c.Query("token")
 
-	user = models.FindUserByIDAndIdentity(user.ID, user.Identity)
-	if user.Name == "" {
+	claim, err := utils.ParseToken(token)
+	if err != nil {
+		c.JSON(401, gin.H{
+
+			"code": 401,
+			"msg":  "登录已过期,请重新登录",
+		})
+		return
+	}
+
+	user = models.FindUserById(user.ID)
+
+	if user.Name != claim.Name {
 		c.Redirect(302, "/")
 		return
 	}

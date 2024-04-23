@@ -58,8 +58,7 @@
                         var token = res.data.Identity
                         localStorage.setItem("token",token)                       
                         url="/chat?userId="+res.data.ID+"&token="+res.data.Identity                        
-                        location.replace(url)
-                        
+                        location.replace(url)                                                       
                         mui.toast("登录成功,即将跳转")
                     }
                 })

@@ -19,7 +19,15 @@ func (msg *Contact) TableName() string {
 
 }
 
-func SearchFriends(userId uint) (friends []UserBasic) {
+type FriendInfo struct {
+	gorm.Model
+	Name   string
+	Phone  string
+	Email  string
+	Avatar string
+}
+
+func SearchFriends(userId uint) (friends []FriendInfo) {
 	var contacts []Contact
 	utils.DB.Where("owner_id = ? and type = ?", userId, 1).Find(&contacts)
 	ids := make([]uint, 0)
@@ -27,7 +35,7 @@ func SearchFriends(userId uint) (friends []UserBasic) {
 	for _, v := range contacts {
 		ids = append(ids, v.TargetId)
 	}
-	utils.DB.Where("id in (?)", ids).Find(&friends)
+	utils.DB.Model(&UserBasic{}).Where("id in (?)", ids).Find(&friends)
 
 	return
 }
