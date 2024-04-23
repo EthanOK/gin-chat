@@ -705,6 +705,83 @@ func sendMsg(userId uint, msg []byte) {
 
 ## 七、Redis 实现 消息存储
 
+- 初始化 Redis 连接
+
 ```go
-// 初始化 Redis 连接
+func InitRedis() {
+	Redis = redis.NewClient(&redis.Options{
+		Addr:         viper.GetString("redis.addr"),
+		DB:           viper.GetInt("redis.db"),
+		Password:     viper.GetString("redis.password"),
+		PoolSize:     viper.GetInt("redis.poolSize"),
+		MinIdleConns: viper.GetInt("redis.minIdleConns"),
+	})
+
+	pong, err := Redis.Ping(context.Background()).Result()
+
+	if err != nil {
+		fmt.Println("Err: ", err)
+	} else {
+		fmt.Println("pong: ", pong)
+	}
+}
+```
+
+- 设置在线用户到 redis 缓存
+
+```go
+func SetUserOnlineInfo(key string, val []byte, timeTTL time.Duration) {
+	ctx := context.Background()
+	utils.Redis.Set(ctx, key, val, timeTTL)
+}
+```
+
+- 后台接受到消息，将消息存储到 Redis 有序集合中
+
+```go
+	var key string
+	if userId > jsonMsg.UserId {
+		key = "msg_" + userIdStr + "_" + targetIdStr
+	} else {
+		key = "msg_" + targetIdStr + "_" + userIdStr
+	}
+
+	// 从 Redis 中以逆序方式获取指定键对应的有序集合中的所有成员
+	res, err := utils.Redis.ZRevRange(ctx, key, 0, -1).Result()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// 往 Redis 中指定键对应的有序集合中添加一条新消息，新消息的分数比已有成员的最高分数高，确保它被放在最前面
+	score := float64(cap(res)) + 1
+	ress, e := utils.Redis.ZAdd(ctx, key, redis.Z{Score: score, Member: msg}).Result()
+```
+
+- 获取 Redis 中指定 key 的数据
+
+```go
+// 根据 isRev 变量的值来决定是正序还是逆序获取 Redis 有序集合中的一段范围内的成员
+func RedisMsg(userIdA int64, userIdB int64, start int64, end int64, isRev bool) []string {
+	ctx := context.Background()
+	userIdStr := strconv.Itoa(int(userIdA))
+	targetIdStr := strconv.Itoa(int(userIdB))
+	var key string
+	if userIdA > userIdB {
+		key = "msg_" + targetIdStr + "_" + userIdStr
+	} else {
+		key = "msg_" + userIdStr + "_" + targetIdStr
+	}
+	var rels []string
+	var err error
+	if isRev {
+		rels, err = utils.Redis.ZRange(ctx, key, start, end).Result()
+	} else {
+		rels, err = utils.Redis.ZRevRange(ctx, key, start, end).Result()
+	}
+	if err != nil {
+		fmt.Println(err) //没有找到
+	}
+	return rels
+}
 ```

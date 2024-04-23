@@ -245,11 +245,15 @@ func sendMsg(userId uint, msg []byte) {
 	} else {
 		key = "msg_" + targetIdStr + "_" + userIdStr
 	}
+
+	// 从 Redis 中以逆序方式获取指定键对应的有序集合中的所有成员
 	res, err := utils.Redis.ZRevRange(ctx, key, 0, -1).Result()
 
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	// 往 Redis 中指定键对应的有序集合中添加一条新消息，新消息的分数比已有成员的最高分数高，确保它被放在最前面
 	score := float64(cap(res)) + 1
 	ress, e := utils.Redis.ZAdd(ctx, key, redis.Z{Score: score, Member: msg}).Result()
 	//res, e := utils.Red.Do(ctx, "zadd", key, 1, jsonMsg).Result() //备用 后续拓展 记录完整msg
